@@ -1,5 +1,6 @@
 "use client";
 
+import { Container } from "@/components/ui/Container";
 import DataTable from "@/components/ui/dataTable";
 import Input from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
@@ -78,28 +79,30 @@ const UsersList = () => {
     user.name.toLowerCase().includes(search.toLowerCase())
   );
   return (
-    <div className="p-6 w-full">
-      <h1 className="mb-6 text-2xl font-bold text-gray-800">User List</h1>
+    <Container>
+      <div className="p-6 w-full">
+        <h1 className="mb-6 text-2xl font-bold text-gray-800">User List</h1>
 
-      {/* Actions: Search + Add Product */}
-      <div className="flex flex-col sm:flex-row gap-3 mb-6 w-full">
-        {/* Search input takes remaining space */}
-        <Input
-          placeholder="Search users..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="flex-1"
-        />
+        {/* Actions: Search + Add Product */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6 w-full">
+          {/* Search input takes remaining space */}
+          <Input
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1"
+          />
 
-        {/* Button sizes to content */}
-        {/* <Link href="/dashboard/products/new" className="inline-block">
+          {/* Button sizes to content */}
+          {/* <Link href="/dashboard/products/new" className="inline-block">
           <Button className="whitespace-nowrap">+ Add Category</Button>
         </Link> */}
-      </div>
+        </div>
 
-      {/* DataTable */}
-      <DataTable columns={columns} data={filteredProducts} />
-    </div>
+        {/* DataTable */}
+        <DataTable size="lg" columns={columns} data={filteredProducts} />
+      </div>
+    </Container>
   );
 };
 

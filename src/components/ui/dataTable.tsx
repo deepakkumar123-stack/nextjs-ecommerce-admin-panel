@@ -207,7 +207,6 @@ function DataTable<T>({
             >
               Next
             </button>
-
             <select
               value={table.getState().pagination.pageSize}
               onChange={(e) => table.setPageSize(Number(e.target.value))}

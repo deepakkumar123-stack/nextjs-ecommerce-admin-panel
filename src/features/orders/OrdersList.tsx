@@ -1,5 +1,6 @@
 "use client";
 
+import { Container } from "@/components/ui/Container";
 import DataTable from "@/components/ui/dataTable";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -105,10 +106,13 @@ const columns: ColumnDef<OrderType>[] = [
 
 const OrderList = () => {
   return (
-    <div className="p-6">
-      <h1 className="mb-4 text-xl font-semibold">Orders</h1>
-      <DataTable columns={columns} data={mockOrders} />
-    </div>
+    <Container>
+      {" "}
+      <div className="p-6 w-full">
+        <h1 className="mb-4 text-xl font-semibold">Orders</h1>
+        <DataTable columns={columns} data={mockOrders} />
+      </div>
+    </Container>
   );
 };
 

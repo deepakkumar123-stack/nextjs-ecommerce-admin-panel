@@ -1,5 +1,6 @@
 "use client";
 
+import { Container } from "@/components/ui/Container";
 import DataTable from "@/components/ui/dataTable";
 import { ColumnDef } from "@tanstack/react-table";
 
@@ -96,10 +97,13 @@ const columns: ColumnDef<ReportType>[] = [
 
 const ReportList = () => {
   return (
-    <div className="p-6">
-      <h1 className="mb-4 text-xl font-semibold">Reports</h1>
-      <DataTable columns={columns} data={mockReports} />
-    </div>
+    <Container>
+      {" "}
+      <div className="p-6">
+        <h1 className="mb-4 text-xl font-semibold">Reports</h1>
+        <DataTable size="lg" columns={columns} data={mockReports} />
+      </div>
+    </Container>
   );
 };
 
