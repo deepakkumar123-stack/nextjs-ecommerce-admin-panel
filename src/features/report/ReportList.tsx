@@ -1,8 +1,11 @@
 "use client";
 
+import Badge from "@/components/ui/badge";
 import { Container } from "@/components/ui/Container";
 import DataTable from "@/components/ui/dataTable";
+import Input from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
+import { useEffect, useState } from "react";
 
 type ReportType = {
   _id: string;
@@ -49,6 +52,20 @@ const mockReports: ReportType[] = [
   },
 ];
 
+// Status badge UI
+const StatusBadge = ({ status }: { status: ReportType["status"] }) => {
+  const statusVariant =
+    status === "Pending"
+      ? "warning"
+      : status === "Failed"
+      ? "danger"
+      : status === "Completed"
+      ? "success"
+      : "danger";
+
+  return <Badge variant={statusVariant}>{status}</Badge>;
+};
+
 const columns: ColumnDef<ReportType>[] = [
   {
     accessorKey: "_id",
@@ -85,23 +102,51 @@ const columns: ColumnDef<ReportType>[] = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.getValue("status") as ReportType["status"];
-      let color = "text-gray-500";
-      if (status === "Pending") color = "text-yellow-500";
-      if (status === "Completed") color = "text-green-500";
-      if (status === "Failed") color = "text-red-500";
-      return <span className={color}>{status}</span>;
+      return <StatusBadge status={row.getValue("status")} />;
     },
   },
 ];
 
 const ReportList = () => {
+  const [search, setSearch] = useState("");
+  const [reports, setReports] = useState<ReportType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+
+    setTimeout(() => {
+      // filter
+      const filtered = mockReports.filter((report) =>
+        report.generatedBy.toLowerCase().includes(search.toLowerCase())
+      );
+
+      setReports(filtered);
+      setLoading(false);
+    }, 500);
+  }, [search]);
   return (
     <Container>
       {" "}
       <div className="p-6">
         <h1 className="mb-4 text-xl font-semibold">Reports</h1>
-        <DataTable size="lg" columns={columns} data={mockReports} />
+        {/* Search */}
+        <div className="flex gap-3 mb-6 w-full">
+          <Input
+            placeholder="Search report..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+            }}
+            className="flex-1"
+          />
+        </div>
+        <DataTable
+          loading={loading}
+          size="lg"
+          columns={columns}
+          data={reports}
+        />
       </div>
     </Container>
   );

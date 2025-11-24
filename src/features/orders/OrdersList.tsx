@@ -2,8 +2,16 @@
 
 import { Container } from "@/components/ui/Container";
 import DataTable from "@/components/ui/dataTable";
+import Input from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
+import { useEffect, useState } from "react";
+import Badge from "@/components/ui/badge";
+import Button from "@/components/ui/button";
+import RightSidebar from "@/components/ui/RightSidebar";
+import { CiFilter } from "react-icons/ci";
+import SelectBox from "@/components/ui/SelectField";
 
+// Order Type
 type OrderType = {
   _id: string;
   customerName: string;
@@ -11,10 +19,10 @@ type OrderType = {
   quantity: number;
   totalPrice: number;
   status: "Pending" | "Shipped" | "Delivered" | "Cancelled";
-  orderDate: string;
+  orderDate: string; // YYYY-MM-DD
 };
 
-// Mock order data
+// Static mock e-commerce data
 const mockOrders: OrderType[] = [
   {
     _id: "1",
@@ -52,8 +60,41 @@ const mockOrders: OrderType[] = [
     status: "Cancelled",
     orderDate: "2025-09-25",
   },
+  {
+    _id: "5",
+    customerName: "Mohit Patel",
+    product: "Laptop Stand",
+    quantity: 1,
+    totalPrice: 699,
+    status: "Shipped",
+    orderDate: "2025-09-24",
+  },
+  {
+    _id: "6",
+    customerName: "Kiran Raj",
+    product: "LED Monitor",
+    quantity: 1,
+    totalPrice: 8999,
+    status: "Delivered",
+    orderDate: "2025-09-23",
+  },
 ];
 
+// Status badge UI
+const StatusBadge = ({ status }: { status: OrderType["status"] }) => {
+  const statusVariant =
+    status === "Pending"
+      ? "warning"
+      : status === "Shipped"
+      ? "info"
+      : status === "Delivered"
+      ? "success"
+      : "danger";
+
+  return <Badge variant={statusVariant}>{status}</Badge>;
+};
+
+// Table Columns
 const columns: ColumnDef<OrderType>[] = [
   {
     accessorKey: "_id",
@@ -74,26 +115,18 @@ const columns: ColumnDef<OrderType>[] = [
   },
   {
     accessorKey: "quantity",
-    header: "Quantity",
+    header: "Qty",
     cell: ({ row }) => <span>{row.getValue("quantity")}</span>,
   },
   {
     accessorKey: "totalPrice",
-    header: "Total Price",
+    header: "Total",
     cell: ({ row }) => <span>₹{row.getValue("totalPrice")}</span>,
   },
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as OrderType["status"];
-      let color = "text-gray-500";
-      if (status === "Pending") color = "text-yellow-500";
-      if (status === "Shipped") color = "text-blue-500";
-      if (status === "Delivered") color = "text-green-500";
-      if (status === "Cancelled") color = "text-red-500";
-      return <span className={color}>{status}</span>;
-    },
+    cell: ({ row }) => <StatusBadge status={row.getValue("status")} />,
   },
   {
     accessorKey: "orderDate",
@@ -105,12 +138,147 @@ const columns: ColumnDef<OrderType>[] = [
 ];
 
 const OrderList = () => {
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState<string[]>([]);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+
+  const [orders, setOrders] = useState<OrderType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filtering function (real-life)
+  const filterOrders = () => {
+    setLoading(true);
+
+    setTimeout(() => {
+      let filtered = [...mockOrders];
+
+      // Search
+      if (search.trim()) {
+        filtered = filtered.filter((o) =>
+          o.customerName.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      // Status
+      if (status.length > 0) {
+        filtered = filtered.filter((o) => status.includes(o.status));
+      }
+
+      // Date From
+      if (dateFrom) {
+        filtered = filtered.filter((o) => o.orderDate >= dateFrom);
+      }
+
+      // Date To
+      if (dateTo) {
+        filtered = filtered.filter((o) => o.orderDate <= dateTo);
+      }
+
+      setOrders(filtered);
+      setLoading(false);
+    }, 300);
+  };
+
+  useEffect(() => {
+    filterOrders();
+  }, [search]);
+
+  const applyFilters = (close: () => void) => {
+    filterOrders();
+    close();
+  };
+
   return (
     <Container>
-      {" "}
       <div className="p-6 w-full">
         <h1 className="mb-4 text-xl font-semibold">Orders</h1>
-        <DataTable columns={columns} data={mockOrders} />
+
+        {/* Search + Filters */}
+        <div className="flex gap-3 mb-6 w-full">
+          <Input
+            type="search"
+            placeholder="Search order..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="flex-1"
+          />
+
+          <RightSidebar
+            trigger={
+              <Button variant="outline" className="flex items-center gap-2">
+                <CiFilter className="w-5 h-5" /> Filter
+              </Button>
+            }
+            title="Filter Orders"
+          >
+            {(close) => (
+              <>
+                <div className="space-y-5">
+                  {/* Customer Name */}
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">
+                      Customer Name
+                    </label>
+                    <Input
+                      placeholder="Search customer..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Status */}
+                  <div>
+                    <SelectBox
+                      label="Status"
+                      options={["Pending", "Shipped", "Delivered", "Cancelled"]}
+                      value={status}
+                      onChange={(val) => setStatus(val)}
+                      getLabel={(x) => x}
+                      getValue={(x) => x}
+                    />
+                  </div>
+
+                  {/* Date Range */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">
+                        From Date
+                      </label>
+                      <Input
+                        type="date"
+                        className="w-full border p-2 rounded-md bg-gray-50 dark:bg-slate-800"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">
+                        To Date
+                      </label>
+                      <Input
+                        type="date"
+                        className="w-full border p-2 rounded-md bg-gray-50 dark:bg-slate-800"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => applyFilters(close)}
+                  className="mt-6 w-full"
+                >
+                  Apply Filters
+                </Button>
+              </>
+            )}
+          </RightSidebar>
+        </div>
+
+        <DataTable loading={loading} columns={columns} data={orders} />
       </div>
     </Container>
   );

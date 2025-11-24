@@ -5,7 +5,7 @@ import DataTable from "@/components/ui/dataTable";
 import Input from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type UserType = {
   _id: string;
@@ -73,6 +73,13 @@ const columns: ColumnDef<UserType>[] = [
 
 const UsersList = () => {
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setLoading(false);
+    }, 2000); // 2 seconds delay
+  }, []);
 
   // filter products by search
   const filteredProducts = mockData.filter((user) =>
@@ -100,7 +107,12 @@ const UsersList = () => {
         </div>
 
         {/* DataTable */}
-        <DataTable size="lg" columns={columns} data={filteredProducts} />
+        <DataTable
+          loading={loading}
+          size="lg"
+          columns={columns}
+          data={filteredProducts}
+        />
       </div>
     </Container>
   );
