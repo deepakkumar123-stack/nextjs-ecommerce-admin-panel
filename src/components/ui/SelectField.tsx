@@ -1,41 +1,52 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
-export type SelectOption<T> = T;
+import { useState, useRef, useEffect } from "react";
+import { ChevronDown, X } from "lucide-react";
 
 interface SelectBoxProps<T> {
   label?: string;
-  options: SelectOption<T>[];
-  value: T[]; // always an array
+  options: T[];
+  value: T[];
   onChange: (val: T[]) => void;
+
+  getLabel: (item: T) => string;
+  getValue: (item: T) => string | number;
+
   placeholder?: string;
   required?: boolean;
   multiple?: boolean;
-  getLabel: (item: T) => string;
-  getValue: (item: T) => string | number;
+
+  onBlur?: (e: any) => void;
+  errorMessage?: string;
 }
 
-export default function SelectBox<T>({
+export default function MultiSelectBox<T>({
   label,
   options,
   value,
   onChange,
-  placeholder = "Select option",
+
+  placeholder = "Select options",
   required,
   multiple = true,
+
   getLabel,
   getValue,
+
+  onBlur,
+  errorMessage,
 }: SelectBoxProps<T>) {
   const [open, setOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Filter options: hide selected ones
-  const filteredOptions = options.filter(
-    (opt) => !value.some((v) => getValue(v) === getValue(opt))
-  );
+  const hasValue = value.length > 0;
+  const hasError = !!errorMessage;
 
-  // Select item
+  // Filter options if multiple
+  const filteredOptions = multiple
+    ? options.filter((opt) => !value.some((v) => getValue(v) === getValue(opt)))
+    : options;
+
   const handleSelect = (item: T) => {
     if (multiple) {
       onChange([...value, item]);
@@ -45,120 +56,128 @@ export default function SelectBox<T>({
     }
   };
 
-  // Clear selected
-  const clearSelection = (e: React.MouseEvent) => {
+  const handleRemove = (e: React.MouseEvent, item: T) => {
     e.stopPropagation();
-    onChange([]);
+    onChange(value.filter((v) => getValue(v) !== getValue(item)));
   };
 
-  // Close dropdown on outside click
+  const clearAll = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange([]);
+    setOpen(false);
+  };
+
+  // Close dropdown when clicking outside
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!wrapperRef.current) return;
+
+      const clickedOutside = !wrapperRef.current.contains(e.target as Node);
+
+      if (clickedOutside) {
+        // close dropdown
+        if (open) {
+          setOpen(false);
+
+          // call onBlur ONLY if user interacted
+          if (onBlur) onBlur(e);
+        }
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
-  const selectedLabels = value.map((v) => getLabel(v));
-  const displayLabel =
-    selectedLabels.length === 0
-      ? placeholder
-      : multiple
-      ? selectedLabels.join(", ")
-      : selectedLabels[0];
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open, onBlur]);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative w-full" ref={wrapperRef}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-semibold mb-1 text-gray-700">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
 
-      {/* Input Box */}
+      {/* Trigger/Input */}
       <div
-        className="w-full px-4 py-2 border rounded-lg cursor-pointer bg-white flex justify-between items-center relative"
-        onClick={() => setOpen(!open)}
-      >
-        <span className={value.length === 0 ? "text-gray-400" : ""}>
-          {displayLabel}
-        </span>
-
-        {/* Clear button show only if value exists */}
-        {value.length > 0 ? (
-          <button
-            className="absolute right-8 text-gray-400 hover:text-gray-600"
-            onClick={clearSelection}
-          >
-            ✕
-          </button>
-        ) : null}
-
-        <svg
-          className={`w-4 h-4 ml-2 transform transition-transform ${
-            open ? "rotate-180" : ""
+        className={`w-full px-3 py-2 border rounded-lg bg-white cursor-pointer flex items-center min-h-[42px] transition
+          ${
+            hasError
+              ? "border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-200"
+              : open
+              ? "border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              : "border-gray-300"
           }`}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M19 9l-7 7-7-7"
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        {/* MULTIPLE: Selected Tags */}
+        {multiple && hasValue ? (
+          <div className="flex flex-wrap gap-2 pr-6">
+            {value.map((item) => (
+              <span
+                key={getValue(item)}
+                className="flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-700 text-xs"
+              >
+                {getLabel(item)}
+                <X
+                  className="w-3 h-3 ml-1 cursor-pointer"
+                  onClick={(e) => handleRemove(e, item)}
+                />
+              </span>
+            ))}
+          </div>
+        ) : (
+          <span className={hasValue ? "text-gray-900" : "text-gray-400"}>
+            {hasValue ? getLabel(value[0]) : placeholder}
+          </span>
+        )}
+
+        {/* Icons */}
+        <div className="ml-auto flex items-center gap-2">
+          {hasValue && multiple && (
+            <X
+              className="w-4 h-4 text-gray-400 hover:text-gray-600"
+              onClick={clearAll}
+            />
+          )}
+
+          <ChevronDown
+            className={`w-4 h-4 text-gray-600 transition-transform ${
+              open ? "rotate-180" : ""
+            }`}
           />
-        </svg>
+        </div>
       </div>
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-20 mt-2 w-full bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
-          {filteredOptions.length === 0 && (
-            <div className="px-4 py-2 text-sm text-gray-400">
-              No more options
+        <div className="absolute z-20 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-md max-h-60 overflow-auto">
+          {filteredOptions.length === 0 ? (
+            <div className="px-4 py-2 text-sm text-gray-500 italic">
+              No options available
             </div>
-          )}
+          ) : (
+            filteredOptions.map((opt) => (
+              <div
+                key={getValue(opt)}
+                onClick={() => handleSelect(opt)}
+                className="px-4 py-2 hover:bg-blue-50 cursor-pointer flex justify-between"
+              >
+                {getLabel(opt)}
 
-          {filteredOptions.map((opt, index) => (
-            <div
-              key={index}
-              onClick={() => handleSelect(opt)}
-              className="px-4 py-2 cursor-pointer hover:bg-blue-50"
-            >
-              {getLabel(opt)}
-            </div>
-          ))}
+                {!multiple &&
+                  hasValue &&
+                  getValue(opt) === getValue(value[0]) && (
+                    <span className="text-blue-500 font-semibold">✓</span>
+                  )}
+              </div>
+            ))
+          )}
         </div>
       )}
 
-      {/* Tags for multiple select */}
-      {multiple && value.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          {value.map((item) => (
-            <span
-              key={getValue(item)}
-              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm flex items-center gap-1"
-            >
-              {getLabel(item)}
-
-              <button
-                onClick={() =>
-                  onChange(value.filter((v) => getValue(v) !== getValue(item)))
-                }
-                className="hover:text-blue-900"
-              >
-                ✕
-              </button>
-            </span>
-          ))}
-        </div>
+      {/* Error Message */}
+      {hasError && (
+        <p className="text-xs text-red-500 font-medium mt-1">{errorMessage}</p>
       )}
     </div>
   );

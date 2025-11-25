@@ -13,13 +13,17 @@ import Tooltip from "@/components/ui/tooltip";
 import { MotionAlertDialog } from "@/components/ui/dailog";
 import { Container } from "@/components/ui/Container";
 import Badge from "@/components/ui/badge";
+import { CiFilter } from "react-icons/ci";
+import RightSidebar from "@/components/ui/RightSidebar";
+import { Package } from "lucide-react";
+import MultiSelectBox from "@/components/ui/SelectField";
 
 type ProductType = {
   _id: string;
   name: string;
   category: string;
-  price: number;
-  stock: number;
+  price: number | string;
+  stock: number | string;
 };
 
 // Mock product data
@@ -54,10 +58,23 @@ const mockProducts: ProductType[] = [
   },
 ];
 
+const categoriesList = [
+  "Electronics",
+  "Clothing",
+  "Accessories",
+  "Footwear",
+  "Home Goods",
+  "Sporting",
+];
 const ProductList = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [priceFrom, setPriceFrom] = useState("");
+  const [priceTo, setPriceTo] = useState("");
+  const [stock, setStock] = useState("");
+  const [products, setProducts] = useState<ProductType[]>([]);
 
   useEffect(() => {
     setTimeout(() => {
@@ -68,13 +85,50 @@ const ProductList = () => {
   const handleDelete = () => {
     console.log("Deleted Successfully!");
   };
+  const filteredProducts = () => {
+    setLoading(true);
 
-  // filter products by search
-  const filteredProducts = mockProducts.filter(
-    (product) =>
-      product.name.toLowerCase().includes(search.toLowerCase()) ||
-      product.category.toLowerCase().includes(search.toLowerCase())
-  );
+    setTimeout(() => {
+      let filtered = [...mockProducts];
+
+      // Search
+      if (search.trim()) {
+        filtered = filtered.filter((o) =>
+          o.name.toLowerCase().includes(search.toLowerCase())
+        );
+      }
+
+      // Status
+      if (categories.length > 0) {
+        filtered = filtered.filter((o) => categories.includes(o.category));
+      }
+
+      if (stock) {
+        filtered = filtered.filter((o) => o.stock === stock);
+      }
+      if (priceFrom) {
+        filtered = filtered.filter((o) => o.price >= priceFrom);
+      }
+
+      // Date To
+      if (priceTo) {
+        filtered = filtered.filter((o) => o.price <= priceTo);
+      }
+
+      setProducts(filtered);
+      setLoading(false);
+    }, 300);
+  };
+
+  useEffect(() => {
+    filteredProducts();
+  }, [search]);
+
+  const applyFilters = (close: () => void) => {
+    filteredProducts();
+    close();
+  };
+
   const columns: ColumnDef<ProductType>[] = [
     {
       accessorKey: "_id",
@@ -172,11 +226,74 @@ const ProductList = () => {
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1"
           />
-
           {/* Button sizes to content */}
           <Link href="/dashboard/products/new" className="inline-block">
             <Button className="whitespace-nowrap">+ Add Product</Button>
           </Link>
+          <RightSidebar
+            trigger={
+              <Button variant="outline" className="flex items-center gap-2">
+                <CiFilter className="w-5 h-5" /> Filter
+              </Button>
+            }
+            title="Filter Orders"
+          >
+            {(close) => (
+              <>
+                <div className="space-y-5">
+                  <div>
+                    <MultiSelectBox
+                      label="Categories"
+                      options={categoriesList}
+                      value={categories}
+                      onChange={(val) => setCategories(val)}
+                      getLabel={(x) => x}
+                      getValue={(x) => x}
+                    />
+                  </div>
+
+                  <div>
+                    <Input
+                      label="Stock Count"
+                      type="number"
+                      className="w-full border  p-2 rounded-md bg-gray-50 dark:bg-slate-800"
+                      icon={<Package className="w-4 h-4 text-gray-400" />}
+                      value={stock}
+                      onChange={(e) => setStock(e.target.value)}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Input
+                        label="From Price "
+                        type="number"
+                        className="w-full border  p-2 rounded-md bg-gray-50 dark:bg-slate-800"
+                        value={priceFrom}
+                        onChange={(e) => setPriceFrom(e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <Input
+                        label="To Price "
+                        type="number"
+                        className="w-full border  p-2 rounded-md bg-gray-50 dark:bg-slate-800"
+                        value={priceTo}
+                        onChange={(e) => setPriceTo(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => applyFilters(close)}
+                  className="mt-6 w-full"
+                >
+                  Apply Filters
+                </Button>
+              </>
+            )}
+          </RightSidebar>
         </div>
 
         {/* DataTable */}
@@ -184,7 +301,7 @@ const ProductList = () => {
           loading={loading}
           size="lg"
           columns={columns}
-          data={filteredProducts}
+          data={products}
         />
 
         {/*cinform dailog*/}
