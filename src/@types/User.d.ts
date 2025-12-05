@@ -11,4 +11,4 @@ declare global {
     updatedAt?: string;
   };
 }
-export {}; // Needed to make this a module
+export {};

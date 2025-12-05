@@ -1,7 +1,7 @@
 "use client";
 
 import { Container } from "@/components/ui/Container";
-import DataTable from "@/components/ui/dataTable";
+import DataTable from "@/components/shared/dataTable/dataTable";
 import Input from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import { useEffect, useState } from "react";

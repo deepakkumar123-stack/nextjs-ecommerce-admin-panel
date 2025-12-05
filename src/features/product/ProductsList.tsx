@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Button from "@/components/ui/button";
-import DataTable from "@/components/ui/dataTable";
+import DataTable from "@/components/shared/dataTable/dataTable";
 import Input from "@/components/ui/input";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
