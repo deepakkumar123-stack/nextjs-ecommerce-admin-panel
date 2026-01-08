@@ -1,11 +1,8 @@
-// types/global.d.ts
-
 declare global {
   type UserType = {
     _id?: string;
     name: string;
     email: string;
-    password: string;
     avatar?: string;
     role?: "admin" | "user" | "editor";
     createdAt?: string;

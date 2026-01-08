@@ -1,8 +1,12 @@
 "use client";
+import { createUser } from "@/api/module/user/user.action";
 import { useFormik } from "formik";
+import { useRouter } from "next/navigation";
 import * as Yup from "yup";
 
 const RegisterForm = () => {
+  const router = useRouter();
+
   const formik = useFormik({
     initialValues: {
       name: "",
@@ -16,9 +20,17 @@ const RegisterForm = () => {
         .min(6, "Password must be at least 6 characters")
         .required("Password is required"),
     }),
-    onSubmit: (values) => {
+    onSubmit: async (values) => {
       console.log("Register data:", values);
-      // Call your API here
+      const payload = {
+        ...values,
+      };
+      try {
+        await createUser(payload);
+        router.push("/dashboard");
+      } catch (error) {
+        console.log("error in creating user", error);
+      }
     },
   });
 

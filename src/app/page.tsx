@@ -1,9 +1,6 @@
-import Link from "next/link";
+// app/page.tsx
+import { redirect } from "next/navigation";
 
 export default function Home() {
-  return (
-    <>
-      <Link href="/dashboard">Go to Dashboard</Link>
-    </>
-  );
+  redirect("/auth/login");
 }
